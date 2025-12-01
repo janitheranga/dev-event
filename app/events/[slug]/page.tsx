@@ -43,33 +43,51 @@ const EventTags = ({ tags }: { tags: string[] }) => (
   </div>
 );
 
-const EventDetailsPage = async ({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) => {
-  const { slug } = await params;
+const EventDetailsPage = async ({ params }: { params: { slug: string } }) => {
+  const { slug } = params;
 
-  const request = await fetch(`${BASE_URL}/api/events/${slug}`);
-  const {
-    event: {
-      description,
-      image,
-      overview,
-      date,
-      time,
-      location,
-      mode,
-      agenda,
-      audience,
-      tags,
-      organizer,
-    },
-  } = await request.json();
+  // Use relative path as fallback if BASE_URL is not defined
+  const apiUrl = BASE_URL
+    ? `${BASE_URL}/api/events/${slug}`
+    : `/api/events/${slug}`;
 
-  if (!description) {
+  const res = await fetch(apiUrl);
+
+  // Handle 404 specifically
+  if (res.status === 404) {
     return notFound();
   }
+
+  // Handle other non-OK responses
+  if (!res.ok) {
+    throw new Error(`Failed to fetch event: ${res.status} ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as {
+    success: boolean;
+    data: IEvent;
+  };
+
+  // Extract event from API response
+  const event = data.data;
+
+  if (!event || !event.description) {
+    return notFound();
+  }
+
+  const {
+    description,
+    image,
+    overview,
+    date,
+    time,
+    location,
+    mode,
+    agenda,
+    audience,
+    tags,
+    organizer,
+  } = event;
 
   const bookings = 10;
 
@@ -113,11 +131,7 @@ const EventDetailsPage = async ({
               alt="pin"
               label={location}
             />
-            <EventDetailsItem
-              icon="/icons/mode.svg"
-              alt="mode"
-              label={mode}
-            />
+            <EventDetailsItem icon="/icons/mode.svg" alt="mode" label={mode} />
             <EventDetailsItem
               icon="/icons/audience.svg"
               alt="audience"
@@ -136,13 +150,13 @@ const EventDetailsPage = async ({
         <aside className="booking">
           <div className="signup-card">
             <h2>Book Your Spot</h2>
-            {
-              bookings > 0 ? (
-                <p className="text-sm">
-                  Join {bookings} people who have already booked their spot!
-                </p>
-              ) : <p className="text-sm">Be the first to book your spot!</p>
-            }
+            {bookings > 0 ? (
+              <p className="text-sm">
+                Join {bookings} people who have already booked their spot!
+              </p>
+            ) : (
+              <p className="text-sm">Be the first to book your spot!</p>
+            )}
             <BookEvent />
           </div>
         </aside>
@@ -151,11 +165,10 @@ const EventDetailsPage = async ({
       <div className="flex w-full flex-col gap-4 pt-20">
         <h2>Similar Events</h2>
         <div className="events">
-            {
-              similiarEvents.length > 0 && similiarEvents.map((similarEvent: IEvent) => (
-                <EventCard key={similarEvent.title} {...similarEvent} />
-              ))
-            }
+          {similiarEvents.length > 0 &&
+            similiarEvents.map((similarEvent: IEvent) => (
+              <EventCard key={similarEvent.title} {...similarEvent} />
+            ))}
         </div>
       </div>
     </section>
