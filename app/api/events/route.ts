@@ -13,19 +13,23 @@ export async function POST(req: NextRequest) {
     try {
       event = Object.fromEntries(formData.entries());
     } catch (e) {
-      return NextResponse.json({
-        message: "Invalid JSON data format",
-        status: 400,
-      });
+      return NextResponse.json(
+        {
+          message: "Invalid JSON data format",
+        },
+        { status: 400 }
+      );
     }
 
     const file = formData.get("image") as File;
 
     if (!file) {
-      return NextResponse.json({
-        message: "Image file is required",
-        status: 400,
-      });
+      return NextResponse.json(
+        {
+          message: "Image file is required",
+        },
+        { status: 400 }
+      );
     }
 
     let tags = formData.getAll("tags");
@@ -93,4 +97,3 @@ export async function GET() {
     );
   }
 }
-
