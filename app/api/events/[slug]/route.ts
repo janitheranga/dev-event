@@ -56,7 +56,7 @@ export async function GET(
     return NextResponse.json(
       {
         success: true,
-        data: event,
+        event: event,
       },
       { status: 200 }
     );

@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    let tags = formData.getAll("tags");
+    let agenda = formData.getAll("agenda");
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -46,7 +49,11 @@ export async function POST(req: NextRequest) {
 
     event.image = (uploadResult as { secure_url: string }).secure_url;
 
-    const createdEvent = await Event.create(event);
+    const createdEvent = await Event.create({
+      ...event,
+      tags,
+      agenda,
+    });
 
     return NextResponse.json(
       { message: "Event created successfully", event: createdEvent },
