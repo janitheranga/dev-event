@@ -1,17 +1,34 @@
 import EventCard from "@/components/EventCard";
 import ExploreBtn from "@/components/ExploreBtn";
 import { IEvent } from "@/database";
-import { events } from "@/lib/constants";
 import { cacheLife } from "next/cache";
 
-const BAESE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 const Page = async () => {
   "use cache";
-  cacheLife("hours"); // Cache this page for 60 seconds
+  cacheLife("hours"); // Cache this page for 1 hour
 
-  const response = await fetch(`${BAESE_URL}/api/events`);
-  const { events } = await response.json();
+  // Use relative path as fallback if BASE_URL is not defined
+  const apiUrl = BASE_URL ? `${BASE_URL}/api/events` : "/api/events";
+
+  const response = await fetch(apiUrl);
+
+  let events: IEvent[] = [];
+
+  // Handle non-OK responses gracefully
+  if (!response.ok) {
+    console.error(
+      `Failed to fetch events: ${response.status} ${response.statusText}`
+    );
+    // Return empty events array on error
+  } else {
+    const data = (await response.json()) as {
+      message: string;
+      events: IEvent[];
+    };
+    events = data.events || [];
+  }
 
   return (
     <section>
